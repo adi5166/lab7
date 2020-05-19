@@ -8,6 +8,7 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
@@ -111,12 +113,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapLongClick(LatLng latLng) {
+        float distance = 0f;
+
+        if (markerList.size() > 0) {
+            Marker lastMarker = markerList.get(markerList.size() - 1);
+            float[] tmpDis = new float[3];
+            Location.distanceBetween(lastMarker.getPosition().latitude, lastMarker.getPosition().longitude,
+                    latLng.latitude, latLng.longitude, tmpDis);
+            distance = tmpDis[0];
+
+            PolylineOptions rectOptions = new PolylineOptions()
+                    .add(lastMarker.getPosition())
+                    .add(latLng)
+                    .width(10)
+                    .color(Color.BLUE);
+            mMap.addPolyline(rectOptions);
+        }
+
+        Marker marker = mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(latLng.latitude, latLng.longitude))
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                .alpha(0.8f)
+                .title(String.format("Position:(%.2f, %.2f) Distance:%.2f", latLng.latitude, latLng.longitude, distance)));
+        markerList.add(marker);
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
         CameraPosition cameraPosition = mMap.getCameraPosition();
-        if(cameraPosition.zoom<14f)
+        if (cameraPosition.zoom < 14f)
             mMap.moveCamera(CameraUpdateFactory.zoomTo(14f));
         return false;
     }
